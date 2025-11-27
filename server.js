@@ -46,7 +46,11 @@ const pool = mysql.createPool({
   database: process.env.DB_NAME || 'iautopecas',
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
+  enableKeepAlive: true,
+  keepAliveInitialDelayMs: 0,
+  connectionTimeoutMillis: 5000,
+  waitForConnectionsMillis: 5000
 });
 
 app.use(cors());
@@ -145,38 +149,48 @@ app.post('/api/auth/register', async (req, res) => {
   try {
     const connection = await pool.getConnection();
     
-    // Verificar se usuário já existe
-    const [usuarios] = await connection.execute(
-      'SELECT id FROM usuarios WHERE username = ? OR email = ?',
-      [username.trim(), email?.trim() || '']
-    );
+    try {
+      // Verificar se usuário já existe
+      const [usuarios] = await connection.execute(
+        'SELECT id FROM usuarios WHERE username = ? OR email = ?',
+        [username.trim(), email?.trim() || '']
+      );
 
-    if (usuarios.length > 0) {
+      if (usuarios.length > 0) {
+        connection.release();
+        return res.status(409).json({ ok: false, msg: 'Usuário ou email já existe' });
+      }
+
+      // Inserir novo usuário com senha em texto simples
+      const [result] = await connection.execute(
+        'INSERT INTO usuarios (username, password, email) VALUES (?, ?, ?)',
+        [username.trim(), password, email?.trim() || null]
+      );
+
+      const usuarioId = result.insertId;
       connection.release();
-      return res.status(409).json({ ok: false, msg: 'Usuário ou email já existe' });
+
+      res.json({
+        ok: true,
+        msg: 'Usuário registrado com sucesso',
+        usuario: {
+          id: usuarioId,
+          username: username.trim()
+        }
+      });
+    } catch (queryError) {
+      connection.release();
+      throw queryError;
     }
 
-    // Inserir novo usuário com senha em texto simples
-    const [result] = await connection.execute(
-      'INSERT INTO usuarios (username, password, email) VALUES (?, ?, ?)',
-      [username.trim(), password, email?.trim() || null]
-    );
-
-    const usuarioId = result.insertId;
-    connection.release();
-
-    res.json({
-      ok: true,
-      msg: 'Usuário registrado com sucesso',
-      usuario: {
-        id: usuarioId,
-        username: username.trim()
-      }
-    });
-
   } catch (error) {
-    console.error('Erro ao registrar:', error);
-    res.status(500).json({ ok: false, msg: 'Erro ao registrar usuário' });
+    console.error('Erro ao registrar:', error.message);
+    // Retornar mensagem genérica
+    res.status(500).json({ 
+      ok: false, 
+      msg: 'Erro ao registrar usuário. Tente novamente mais tarde.',
+      debug: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
@@ -191,32 +205,42 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const connection = await pool.getConnection();
 
-    // Buscar usuário
-    const [usuarios] = await connection.execute(
-      'SELECT id, username FROM usuarios WHERE username = ? AND password = ?',
-      [username.trim(), password]
-    );
+    try {
+      // Buscar usuário
+      const [usuarios] = await connection.execute(
+        'SELECT id, username FROM usuarios WHERE username = ? AND password = ?',
+        [username.trim(), password]
+      );
 
-    connection.release();
+      if (usuarios.length === 0) {
+        connection.release();
+        return res.status(401).json({ ok: false, msg: 'Usuário ou senha incorretos' });
+      }
 
-    if (usuarios.length === 0) {
-      return res.status(401).json({ ok: false, msg: 'Usuário ou senha incorretos' });
+      const usuario = usuarios[0];
+      connection.release();
+
+      res.json({
+        ok: true,
+        msg: 'Login realizado com sucesso',
+        usuario: {
+          id: usuario.id,
+          username: usuario.username
+        }
+      });
+    } catch (queryError) {
+      connection.release();
+      throw queryError;
     }
 
-    const usuario = usuarios[0];
-
-    res.json({
-      ok: true,
-      msg: 'Login realizado com sucesso',
-      usuario: {
-        id: usuario.id,
-        username: usuario.username
-      }
-    });
-
   } catch (error) {
-    console.error('Erro ao fazer login:', error);
-    res.status(500).json({ ok: false, msg: 'Erro ao fazer login' });
+    console.error('Erro ao fazer login:', error.message);
+    // Retornar mensagem genérica
+    res.status(500).json({ 
+      ok: false, 
+      msg: 'Erro ao fazer login. Tente novamente mais tarde.',
+      debug: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
