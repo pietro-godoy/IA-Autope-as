@@ -82,8 +82,11 @@ async function getSearchHistory() {
   const user = getCurrentUser();
   if (!user) return [];
 
+  const url = `${API_BASE_URL}/historico?usuarioId=${user.id}`;
+  console.log('Fetching history from:', url);
   const result = await apiCall(`/historico?usuarioId=${user.id}`, { method: 'GET' });
   
+  console.log('History result:', result);
   if (!result.ok) return [];
   
   return result.historico || [];
@@ -351,16 +354,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const userArea = document.getElementById("userArea");
 
   async function renderHistoryFor() {
-    if (!historyList) return;
+    if (!historyList) {
+      console.log('historyList element not found');
+      return;
+    }
     historyList.innerHTML = "";
     
     if (!currentUsername) {
+      console.log('No current user');
       historyList.innerHTML = '<li style="background:transparent;color:#666;text-align:center;padding:1rem;">Faça login para salvar seu histórico.</li>';
       if (clearHistoryBtn) clearHistoryBtn.style.display = 'none';
       return;
     }
 
     const buscas = await getSearchHistory();
+    console.log('Retrieved searches:', buscas);
     if (buscas.length === 0) {
       historyList.innerHTML = '<li style="background:transparent;color:#999;text-align:center;padding:1rem;font-style:italic;">Nenhuma busca ainda.</li>';
       if (clearHistoryBtn) clearHistoryBtn.style.display = 'none';
