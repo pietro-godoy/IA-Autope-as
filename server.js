@@ -222,10 +222,10 @@ app.post('/api/auth/login', async (req, res) => {
     const connection = await pool.getConnection();
 
     try {
-      // Buscar usuário
+      // Buscar usuário por username OU email
       const [usuarios] = await connection.execute(
-        'SELECT id, username FROM usuarios WHERE username = ? AND senha = ?',
-        [username.trim(), password]
+        'SELECT id, username FROM usuarios WHERE (username = ? OR email = ?) AND senha = ?',
+        [username.trim(), username.trim(), password]
       );
 
       if (usuarios.length === 0) {

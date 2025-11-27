@@ -86,7 +86,7 @@ async function getSearchHistory() {
   
   if (!result.ok) return [];
   
-  return result.buscas || [];
+  return result.historico || [];
 }
 
 async function addSearchFor(termo) {
