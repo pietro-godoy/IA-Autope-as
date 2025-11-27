@@ -299,12 +299,62 @@ app.get('/api/historico', async (req, res) => {
   }
 });
 
+// Rota para Salvar Histórico de Buscas
+app.post('/api/historico', async (req, res) => {
+  const { usuarioId, termo } = req.body;
+
+  if (!usuarioId) {
+    return res.status(400).json({ ok: false, msg: 'ID do usuário é obrigatório' });
+  }
+
+  if (!termo || termo.trim().length === 0) {
+    return res.status(400).json({ ok: false, msg: 'Termo de busca é obrigatório' });
+  }
+
+  try {
+    const connection = await pool.getConnection();
+
+    try {
+      // Inserir histórico de busca
+      const [result] = await connection.execute(
+        'INSERT INTO historico_buscas (usuario_id, termo) VALUES (?, ?)',
+        [usuarioId, termo.trim()]
+      );
+
+      connection.release();
+
+      res.json({
+        ok: true,
+        msg: 'Histórico salvo com sucesso',
+        historico: {
+          id: result.insertId,
+          usuario_id: usuarioId,
+          termo: termo.trim(),
+          data_busca: new Date().toISOString()
+        }
+      });
+    } catch (queryError) {
+      connection.release();
+      throw queryError;
+    }
+
+  } catch (error) {
+    console.error('Erro ao salvar histórico:', error.message);
+    res.status(500).json({
+      ok: false,
+      msg: 'Erro ao salvar histórico de buscas. Tente novamente mais tarde.',
+      debug: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`\n✅ Servidor IAuto Peças rodando em ${API_BASE_URL}\n`);
   console.log('Endpoints disponíveis:');
   console.log('  POST   /api/auth/register');
   console.log('  POST   /api/auth/login');
   console.log('  POST   /api/pecas/buscar');
+  console.log('  POST   /api/historico');
   console.log('  GET    /api/pecas');
   console.log('  GET    /api/historico');
   console.log('  GET    /api/health\n');
