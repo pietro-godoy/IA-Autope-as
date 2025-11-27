@@ -44,14 +44,30 @@ const pool = mysql.createPool({
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'iautopecas',
+  port: process.env.DB_PORT || 3306,
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit: 5,
   queueLimit: 0,
   enableKeepAlive: true,
-  keepAliveInitialDelayMs: 0,
-  connectionTimeoutMillis: 5000,
-  waitForConnectionsMillis: 5000
+  keepAliveInitialDelayMs: 30000,
+  authPlugins: {
+    mysql_native_password: () => () => process.env.DB_PASSWORD || ''
+  }
 });
+
+// Testar conexão ao iniciar
+pool.getConnection()
+  .then(conn => {
+    console.log('✅ Conexão com banco de dados estabelecida');
+    conn.release();
+  })
+  .catch(err => {
+    console.error('❌ Erro ao conectar ao banco de dados:', err.message);
+    console.error('   DB_HOST:', process.env.DB_HOST);
+    console.error('   DB_USER:', process.env.DB_USER);
+    console.error('   DB_NAME:', process.env.DB_NAME);
+    console.error('   DB_PORT:', process.env.DB_PORT || 3306);
+  });
 
 app.use(cors());
 app.use(express.json());
@@ -265,7 +281,13 @@ app.get('/api/pecas', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`\n✅ Servidor IAuto Peças rodando em ${API_BASE_URL}\n`);
   console.log('Endpoints disponíveis:');
+  console.log('  POST   /api/auth/register');
+  console.log('  POST   /api/auth/login');
   console.log('  POST   /api/pecas/buscar');
   console.log('  GET    /api/pecas');
   console.log('  GET    /api/health\n');
+  console.log('Variáveis de ambiente carregadas:');
+  console.log('  NODE_ENV:', process.env.NODE_ENV || 'development');
+  console.log('  PORT:', PORT);
+  console.log('  DB_HOST:', process.env.DB_HOST || '127.0.0.1');
 });

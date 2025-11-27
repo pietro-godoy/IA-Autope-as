@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS iautopecas;
-USE iautopecas;
+CREATE DATABASE IF NOT EXISTS railway;
+USE railway;
 
 DROP TABLE IF EXISTS historico_buscas;
 DROP TABLE IF EXISTS respostas_ia;
