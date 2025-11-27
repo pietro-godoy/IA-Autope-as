@@ -82,7 +82,7 @@ async function getSearchHistory() {
   const user = getCurrentUser();
   if (!user) return [];
 
-  const result = await apiCall('/historico', { method: 'GET' });
+  const result = await apiCall(`/historico?usuarioId=${user.id}`, { method: 'GET' });
   
   if (!result.ok) return [];
   
@@ -101,7 +101,7 @@ async function addSearchFor(termo) {
 
   const result = await apiCall('/historico', {
     method: 'POST',
-    body: JSON.stringify({ termo: termo.trim() })
+    body: JSON.stringify({ usuarioId: user.id, termo: termo.trim() })
   });
   
   return result;
@@ -113,7 +113,7 @@ async function clearHistoryFor() {
     return { ok: false, msg: 'Não autenticado' };
   }
 
-  const result = await apiCall('/historico', { method: 'DELETE' });
+  const result = await apiCall('/historico', { method: 'DELETE', body: JSON.stringify({ usuarioId: user.id }) });
   
   return result;
 }

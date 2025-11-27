@@ -348,6 +348,28 @@ app.post('/api/historico', async (req, res) => {
   }
 });
 
+// Rota para Limpar Histórico de Buscas
+app.delete('/api/historico', async (req, res) => {
+  const { usuarioId } = req.body;
+
+  if (!usuarioId) {
+    return res.status(400).json({ ok: false, msg: 'ID do usuário é obrigatório' });
+  }
+
+  try {
+    const connection = await pool.getConnection();
+    const result = await connection.execute(
+      'DELETE FROM historico_buscas WHERE usuario_id = ?',
+      [usuarioId]
+    );
+    connection.release();
+    res.json({ ok: true, msg: 'Histórico limpo com sucesso', deletedRows: result[0].affectedRows });
+  } catch (error) {
+    console.error('Erro ao limpar histórico:', error);
+    res.status(500).json({ ok: false, msg: 'Erro ao limpar histórico de buscas' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`\n✅ Servidor IAuto Peças rodando em ${API_BASE_URL}\n`);
   console.log('Endpoints disponíveis:');
@@ -357,6 +379,7 @@ app.listen(PORT, () => {
   console.log('  POST   /api/historico');
   console.log('  GET    /api/pecas');
   console.log('  GET    /api/historico');
+  console.log('  DELETE /api/historico');
   console.log('  GET    /api/health\n');
   console.log('Variáveis de ambiente carregadas:');
   console.log('  NODE_ENV:', process.env.NODE_ENV || 'development');
