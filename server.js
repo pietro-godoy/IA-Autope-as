@@ -278,6 +278,27 @@ app.get('/api/pecas', async (req, res) => {
   }
 });
 
+app.get('/api/historico', async (req, res) => {
+  const { usuarioId } = req.query;
+
+  if (!usuarioId) {
+    return res.status(400).json({ ok: false, msg: 'ID do usuário é obrigatório' });
+  }
+
+  try {
+    const connection = await pool.getConnection();
+    const [historico] = await connection.execute(
+      'SELECT id, usuario_id, termo, data_busca FROM historico_buscas WHERE usuario_id = ? ORDER BY data_busca DESC',
+      [usuarioId]
+    );
+    connection.release();
+    res.json({ ok: true, historico });
+  } catch (error) {
+    console.error('Erro ao obter histórico:', error);
+    res.status(500).json({ ok: false, msg: 'Erro ao obter histórico de buscas' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`\n✅ Servidor IAuto Peças rodando em ${API_BASE_URL}\n`);
   console.log('Endpoints disponíveis:');
@@ -285,6 +306,7 @@ app.listen(PORT, () => {
   console.log('  POST   /api/auth/login');
   console.log('  POST   /api/pecas/buscar');
   console.log('  GET    /api/pecas');
+  console.log('  GET    /api/historico');
   console.log('  GET    /api/health\n');
   console.log('Variáveis de ambiente carregadas:');
   console.log('  NODE_ENV:', process.env.NODE_ENV || 'development');
