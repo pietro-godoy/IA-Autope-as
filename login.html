@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - IAuto Peças</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="modal.js"></script>
+</head>
+<body class="login-body">
+
+  <div class="login-container">
+    <div class="login-left">
+      <h1>🚗 IAuto Peças</h1>
+      <p>Soluções inteligentes para o seu carro. Encontre as peças perfeitas com tecnologia de IA.</p>
+    </div>
+
+    <div class="login-right">
+      <a href="index.html" class="btn-back-login" title="Voltar">←</a>
+      
+      <h2 id="formTitle">Fazer Login</h2>
+
+      <!-- Formulário de Login -->
+      <form id="loginForm" class="auth-form" style="display: none;">
+        <input type="text" id="loginUser" placeholder="Usuário ou Email">
+        <input type="password" id="loginPass" placeholder="Senha">
+        <button type="submit">Entrar</button>
+      </form>
+
+      <!-- Formulário de Cadastro -->
+      <form id="registerForm" class="auth-form" style="display: none;">
+        <input type="text" id="registerUsername" placeholder="Nome de usuário">
+        <input type="email" id="registerEmail" placeholder="Email">
+        <input type="password" id="registerPass" placeholder="Senha">
+        <input type="password" id="registerPassConfirm" placeholder="Confirmar senha">
+        <button type="submit">Cadastrar</button>
+      </form>
+
+      <div class="auth-actions">
+        <p id="toggleText">Não tem conta?</p>
+        <button id="toggleBtn" type="button">Cadastre-se</button>
+      </div>
+
+      <div id="authMsg" class="auth-msg" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
