@@ -137,6 +137,95 @@ app.post('/api/pecas/buscar', async (req, res) => {
   }
 });
 
+// Rota de Registro
+app.post('/api/auth/register', async (req, res) => {
+  const { username, password, email } = req.body;
+
+  if (!username || username.trim().length < 3) {
+    return res.status(400).json({ ok: false, msg: 'Usuário deve ter no mínimo 3 caracteres' });
+  }
+  if (!password || password.length < 6) {
+    return res.status(400).json({ ok: false, msg: 'Senha deve ter no mínimo 6 caracteres' });
+  }
+
+  try {
+    const connection = await pool.getConnection();
+    
+    // Verificar se usuário já existe
+    const [usuarios] = await connection.execute(
+      'SELECT id FROM usuarios WHERE username = ? OR email = ?',
+      [username.trim(), email?.trim() || '']
+    );
+
+    if (usuarios.length > 0) {
+      connection.release();
+      return res.status(409).json({ ok: false, msg: 'Usuário ou email já existe' });
+    }
+
+    // Inserir novo usuário com senha em texto simples
+    const [result] = await connection.execute(
+      'INSERT INTO usuarios (username, password, email) VALUES (?, ?, ?)',
+      [username.trim(), password, email?.trim() || null]
+    );
+
+    const usuarioId = result.insertId;
+    connection.release();
+
+    res.json({
+      ok: true,
+      msg: 'Usuário registrado com sucesso',
+      usuario: {
+        id: usuarioId,
+        username: username.trim()
+      }
+    });
+
+  } catch (error) {
+    console.error('Erro ao registrar:', error);
+    res.status(500).json({ ok: false, msg: 'Erro ao registrar usuário' });
+  }
+});
+
+// Rota de Login
+app.post('/api/auth/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ ok: false, msg: 'Usuário e senha são obrigatórios' });
+  }
+
+  try {
+    const connection = await pool.getConnection();
+
+    // Buscar usuário
+    const [usuarios] = await connection.execute(
+      'SELECT id, username FROM usuarios WHERE username = ? AND password = ?',
+      [username.trim(), password]
+    );
+
+    connection.release();
+
+    if (usuarios.length === 0) {
+      return res.status(401).json({ ok: false, msg: 'Usuário ou senha incorretos' });
+    }
+
+    const usuario = usuarios[0];
+
+    res.json({
+      ok: true,
+      msg: 'Login realizado com sucesso',
+      usuario: {
+        id: usuario.id,
+        username: usuario.username
+      }
+    });
+
+  } catch (error) {
+    console.error('Erro ao fazer login:', error);
+    res.status(500).json({ ok: false, msg: 'Erro ao fazer login' });
+  }
+});
+
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, msg: 'Servidor rodando' });
 });

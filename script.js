@@ -5,17 +5,7 @@ const API_BASE_URL = window.API_CONFIG?.API_BASE_URL ||
     ? `http://${window.location.hostname}:3000/api`
     : `${window.location.protocol}//${window.location.hostname}/api`);
 
-const TOKEN_KEY = "iauto_token";
 const USER_KEY = "iauto_user";
-
-function setToken(token) {
-  if (!token) return;
-  localStorage.setItem(TOKEN_KEY, token);
-}
-
-function getToken() {
-  return localStorage.getItem(TOKEN_KEY);
-}
 
 function getCurrentUser() {
   const raw = localStorage.getItem(USER_KEY);
@@ -31,21 +21,12 @@ function setCurrentUser(userData) {
 }
 
 function logoutCurrentUser() {
-  localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
 }
 
 async function apiCall(endpoint, options = {}) {
-  const token = getToken();
-  
-  const needsAuth = !['/auth/register', '/auth/login', '/api/health', '/pecas'].includes(endpoint);
-  if (needsAuth && !token) {
-    return { ok: false, msg: 'Não autenticado. Faça login.' };
-  }
-
   const headers = {
     'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` }),
     ...options.headers
   };
 
@@ -56,14 +37,6 @@ async function apiCall(endpoint, options = {}) {
     });
 
     const data = await response.json();
-    
-    // Redirecionar apenas se houver token e receber 401 (token expirado/inválido)
-    // Não redirecionar durante login/registro (que pode retornar 401 legitimamente)
-    if (response.status === 401 && token && endpoint !== '/auth/login' && endpoint !== '/auth/register') {
-      logoutCurrentUser();
-      window.location.href = 'login.html';
-    }
-    
     return data;
   } catch (error) {
     return { ok: false, msg: 'Erro ao conectar com o servidor' };
@@ -83,8 +56,7 @@ async function registerUser(username, password, email = '') {
     body: JSON.stringify({ username: username.trim(), password, email: email.trim() })
   });
 
-  if (result.ok && result.token) {
-    setToken(result.token);
+  if (result.ok && result.usuario) {
     setCurrentUser(result.usuario);
   }
 
@@ -101,8 +73,7 @@ async function loginUser(username, password) {
     body: JSON.stringify({ username: username.trim(), password })
   });
 
-  if (result.ok && result.token) {
-    setToken(result.token);
+  if (result.ok && result.usuario) {
     setCurrentUser(result.usuario);
   }
 
