@@ -315,11 +315,24 @@ app.post('/api/historico', async (req, res) => {
     const connection = await pool.getConnection();
 
     try {
-      // Inserir histórico de busca
-      const [result] = await connection.execute(
-        'INSERT INTO historico_buscas (usuario_id, termo) VALUES (?, ?)',
+      const [existing] = await connection.execute(
+        'SELECT id FROM historico_buscas WHERE usuario_id = ? AND termo = ?',
         [usuarioId, termo.trim()]
       );
+
+      let result;
+      if (existing.length > 0) {
+        await connection.execute(
+          'UPDATE historico_buscas SET data_busca = NOW() WHERE usuario_id = ? AND termo = ?',
+          [usuarioId, termo.trim()]
+        );
+        result = { insertId: existing[0].id };
+      } else {
+        [result] = await connection.execute(
+          'INSERT INTO historico_buscas (usuario_id, termo) VALUES (?, ?)',
+          [usuarioId, termo.trim()]
+        );
+      }
 
       connection.release();
 

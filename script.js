@@ -339,7 +339,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const res = await registerUser(username, password, email);
       if (res.ok) {
         showSuccess("Cadastro realizado com sucesso! Você foi logado automaticamente.", "Bem-vindo!", () => {
-          window.location.href = "index.html";
+          window.location.href = "buscar.html";
         });
       } else {
         showError(res.msg || "Erro ao cadastrar", "Erro no cadastro");
