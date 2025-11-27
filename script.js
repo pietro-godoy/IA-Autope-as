@@ -1,5 +1,3 @@
-// Usar URL dinâmica vinda do servidor (config.js)
-// Fallback para localhost se não conseguir carregar do servidor
 const API_BASE_URL = window.API_CONFIG?.API_BASE_URL || 
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? `http://${window.location.hostname}:3000/api`

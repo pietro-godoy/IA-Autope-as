@@ -53,12 +53,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// Rota para servir configuração dinâmica
-app.get('/config.js', (req, res) => {
-  const configJs = `window.API_CONFIG = { API_BASE_URL: "${API_BASE_URL}" };`;
-  res.type('application/javascript').send(configJs);
-});
-
 app.post('/api/pecas/buscar', async (req, res) => {
   const { carroNome } = req.body;
 
