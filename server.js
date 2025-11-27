@@ -6,6 +6,7 @@ require('dotenv').config();
 const app = express();
 
 const PORT = process.env.PORT || 3000;
+const API_BASE_URL = process.env.API_BASE_URL || `http://localhost:${PORT}/api`;
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 
 const pecasCache = new Map();
@@ -51,6 +52,12 @@ const pool = mysql.createPool({
 app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
+
+// Rota para servir configuração dinâmica
+app.get('/config.js', (req, res) => {
+  const configJs = `window.API_CONFIG = { API_BASE_URL: "${API_BASE_URL}" };`;
+  res.type('application/javascript').send(configJs);
+});
 
 app.post('/api/pecas/buscar', async (req, res) => {
   const { carroNome } = req.body;
@@ -149,7 +156,7 @@ app.get('/api/pecas', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`\n✅ Servidor IAuto Peças rodando em http://localhost:${PORT}\n`);
+  console.log(`\n✅ Servidor IAuto Peças rodando em ${API_BASE_URL}\n`);
   console.log('Endpoints disponíveis:');
   console.log('  POST   /api/pecas/buscar');
   console.log('  GET    /api/pecas');
