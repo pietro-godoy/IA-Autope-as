@@ -179,7 +179,7 @@ app.post('/api/auth/register', async (req, res) => {
 
       // Inserir novo usuário com senha em texto simples
       const [result] = await connection.execute(
-        'INSERT INTO usuarios (username, password, email) VALUES (?, ?, ?)',
+        'INSERT INTO usuarios (username, senha, email) VALUES (?, ?, ?)',
         [username.trim(), password, email?.trim() || null]
       );
 
@@ -224,7 +224,7 @@ app.post('/api/auth/login', async (req, res) => {
     try {
       // Buscar usuário
       const [usuarios] = await connection.execute(
-        'SELECT id, username FROM usuarios WHERE username = ? AND password = ?',
+        'SELECT id, username FROM usuarios WHERE username = ? AND senha = ?',
         [username.trim(), password]
       );
 
